@@ -29,45 +29,57 @@ containsAddedKey(int, SearchTree) ✔
 ```
 
 > **Первая тестовая версия (0.1.0-SNAPSHOT).** Работает только на форке JUnit с `@InvocationComposition`
-> ([IWillBurn/junit-framework-comparison](https://github.com/IWillBurn/junit-framework-comparison), ветка
-> `invocation-composition`, версия `6.2.0-SNAPSHOT`). На релизном JUnit проект не компилируется.
+> ([IWillBurn/junit-framework-composition](https://github.com/IWillBurn/junit-framework-composition), ветка
+> `invocation-composition`). На релизном JUnit проект не компилируется.
 
 ## Как запустить
 
-Нужно: JDK 25 для сборки форка, JDK 17+ и Maven 3.9+ для этого проекта, git.
-
-### 1. Собрать форк JUnit и опубликовать его в локальный Maven-репозиторий
+Нужно: JDK 17+ и Maven 3.9+. Собирать форк JUnit не нужно.
 
 ```bash
-git clone https://github.com/IWillBurn/junit-framework-comparison.git
-cd junit-framework-comparison
-git checkout invocation-composition
-./gradlew publishToMavenLocal        # JAVA_HOME = JDK 25; тесты JUnit не запускаются
-```
-
-Все модули JUnit версии `6.2.0-SNAPSHOT` окажутся в `~/.m2/repository/org/junit/`. Проект берёт их через
-`junit-bom` (свойство `junit.version` в корневом `pom.xml`).
-
-Если в `~/.m2` уже лежит `6.2.0-SNAPSHOT` из другого источника (сборка upstream `main`, другой локальный
-репозиторий), удалите его перед публикацией: иначе Maven может взять чужие jar-ы или отказаться их
-использовать (`_remote.repositories` с другим id).
-
-```bash
-rm -rf ~/.m2/repository/org/junit/*/6.2.0-SNAPSHOT ~/.m2/repository/org/junit/*/*/6.2.0-SNAPSHOT
-```
-
-После изменений в форке достаточно повторить `./gradlew publishToMavenLocal`.
-
-### 2. Собрать проект и прогнать тесты
-
-```bash
+git clone https://github.com/IWillBurn/junit-comparison.git
 cd junit-comparison
+scripts/install-junit-fork.sh
 mvn verify
+```
+
+В Git Bash, Linux и macOS — `scripts/install-junit-fork.sh`. В PowerShell или cmd на Windows — `.cmd`-обёртка (она
+запускает `install-junit-fork.ps1` с `-ExecutionPolicy Bypass`, менять политику выполнения скриптов не нужно):
+
+```powershell
+scripts\install-junit-fork.cmd
 ```
 
 Ожидаемый итог: 12 тестов библиотеки и 58 листьев примеров, из них 1 пропущен (`@DisabledForImplementation`).
 
-Полезные варианты (запускать из корня проекта, иначе модуль примеров не найдёт библиотеку — или сначала `mvn install`):
+### Откуда берётся JUnit
+
+Сборки форка публикуются [релизами форка](https://github.com/IWillBurn/junit-framework-composition/releases). У каждого
+релиза своя версия (`6.2.0-composition-1`, `6.2.0-composition-2`, …) и один файл
+`junit-<версия>-maven-repository.zip` — все модули JUnit в раскладке Maven-репозитория.
+
+Скрипт `install-junit-fork` берёт версию из свойства `junit.version` корневого `pom.xml` (или из аргумента), скачивает
+файл релиза и распаковывает его в `~/.m2/repository` (другой путь — переменная `MAVEN_REPO_LOCAL`). Дальше Maven
+находит JUnit локально, и никаких репозиториев в `pom.xml` не нужно. Версии с суффиксом `composition` не
+пересекаются с официальными версиями JUnit.
+
+### Новая сборка форка
+
+1. В форке: **Actions → Publish composition build → Run workflow**, указать новую версию (например,
+   `6.2.0-composition-2`) и ветку (по умолчанию `invocation-composition`). Workflow собирает JUnit и создаёт релиз
+   с этой версией.
+2. Здесь: поменять `junit.version` в `pom.xml` и снова запустить `install-junit-fork` (`.sh` или `.cmd`).
+
+Для локальной работы с форком без релиза — своя версия в `~/.m2`:
+
+```bash
+./gradlew -Pversion=6.2.0-local-SNAPSHOT publishToMavenLocal    # в форке
+mvn verify -Djunit.version=6.2.0-local-SNAPSHOT                 # в junit-comparison
+```
+
+### Полезные команды
+
+Запускать из корня проекта (иначе модуль примеров не найдёт библиотеку — или сначала `mvn install`):
 
 ```bash
 # только одна реализация (простые имена классов через запятую)
@@ -83,17 +95,18 @@ mvn test -Pfailure-demo
 mvn test -Dtest='SearchTreeTest#containsAddedKey' -Dsurefire.failIfNoSpecifiedTests=false
 ```
 
-### 3. Посмотреть дерево
+### Посмотреть дерево
 
 В IntelliJ IDEA: открыть корневой `pom.xml` как проект и запустить тесты модуля `junit-comparison-examples`. Любой
 лист (например, `[2] key = 0 > TreeSetSearchTree`) можно перезапустить отдельно — IDE выбирает его по UniqueId.
 
-В консоли — ConsoleLauncher из того же форка (он тоже опубликован в `~/.m2`):
+В консоли — ConsoleLauncher из того же форка:
 
 ```bash
 mvn test-compile
-java -jar ~/.m2/repository/org/junit/platform/junit-platform-console-standalone/6.2.0-SNAPSHOT/junit-platform-console-standalone-6.2.0-SNAPSHOT.jar \
-  execute --details=tree \
+mvn -N dependency:copy -DoutputDirectory=target -Dmdep.stripVersion=true \
+  -Dartifact=org.junit.platform:junit-platform-console-standalone:6.2.0-composition-1
+java -jar target/junit-platform-console-standalone.jar execute --details=tree \
   -cp junit-comparison-examples/target/test-classes:junit-comparison-examples/target/classes:junit-comparison/target/classes \
   --select-package org.atpfivt.comparison.examples --exclude-tag failure-demo
 ```
@@ -102,7 +115,8 @@ java -jar ~/.m2/repository/org/junit/platform/junit-platform-console-standalone/
 
 ### Подключение в свой проект
 
-Сначала `mvn install` в этом репозитории (устанавливается только библиотека), затем:
+Сначала `install-junit-fork` (`.sh` или `.cmd`) и `mvn install` в этом репозитории (устанавливается только библиотека),
+затем:
 
 ```xml
 <dependencyManagement>
@@ -110,7 +124,7 @@ java -jar ~/.m2/repository/org/junit/platform/junit-platform-console-standalone/
         <dependency>
             <groupId>org.junit</groupId>
             <artifactId>junit-bom</artifactId>
-            <version>6.2.0-SNAPSHOT</version>
+            <version>6.2.0-composition-1</version>
             <type>pom</type>
             <scope>import</scope>
         </dependency>
@@ -141,7 +155,7 @@ repositories {
 }
 
 dependencies {
-    testImplementation(platform("org.junit:junit-bom:6.2.0-SNAPSHOT"))
+    testImplementation(platform("org.junit:junit-bom:6.2.0-composition-1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation("org.atpfivt:junit-comparison:0.1.0-SNAPSHOT")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
@@ -261,12 +275,13 @@ junit-comparison/
 │     ├─ CompareImplementations, ImplementationTest, DisabledForImplementation   публичный API
 │     └─ internal/                 провайдер вызовов, резолвер параметров, условие (не API)
 │  └─ src/test/java/...            тесты библиотеки на EngineTestKit: форма дерева, фильтр, UniqueId, ошибки
-└─ junit-comparison-examples/      примеры с деревом поиска (не устанавливается в репозиторий)
+├─ junit-comparison-examples/      примеры с деревом поиска (не устанавливается в репозиторий)
+└─ scripts/install-junit-fork.*    установка сборки форка из релиза в ~/.m2 (sh; cmd + ps1 для Windows)
 ```
 
 ## Ограничения
 
-- Нужен форк JUnit `6.2.0-SNAPSHOT` с `@InvocationComposition`.
+- Нужна сборка форка JUnit с `@InvocationComposition` (версия — `junit.version` в `pom.xml`).
 - Реализации всегда самый нижний уровень; `@RepeatedTest` нельзя поставить уровнем под реализациями или под
   аргументами — повторы всегда остаются верхним уровнем.
 - `@ResourceLock` для отдельной реализации не поддерживается: платформа запрещает динамическим узлам
