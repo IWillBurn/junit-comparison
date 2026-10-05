@@ -29,8 +29,8 @@ containsAddedKey(int, SearchTree) ✔
 ```
 
 > **Первая тестовая версия (0.1.0-SNAPSHOT).** Работает только на форке JUnit с `@InvocationComposition`
-> ([IWillBurn/junit-framework-composition](https://github.com/IWillBurn/junit-framework-composition), ветка
-> `invocation-composition`). На релизном JUnit проект не компилируется.
+> ([IWillBurn/junit-framework-composition](https://github.com/IWillBurn/junit-framework-composition)). На релизном
+> JUnit проект не компилируется.
 
 ## Как запустить
 
@@ -66,7 +66,7 @@ scripts\install-junit-fork.cmd
 ### Новая сборка форка
 
 1. В форке: **Actions → Publish composition build → Run workflow**, указать новую версию (например,
-   `6.2.0-composition-2`) и ветку (по умолчанию `invocation-composition`). Workflow собирает JUnit и создаёт релиз
+   `6.2.0-composition-2`) и ветку (по умолчанию `main`). Workflow собирает JUnit и создаёт релиз
    с этой версией.
 2. Здесь: поменять `junit.version` в `pom.xml` и снова запустить `install-junit-fork` (`.sh` или `.cmd`).
 
