@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.atpfivt</groupId>
+        <artifactId>junit-comparison-parent</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>junit-comparison-examples</artifactId>
+    <name>JUnit Comparison Examples</name>
+
+    <properties>
+        <maven.install.skip>true</maven.install.skip>
+        <excludedGroups>failure-demo</excludedGroups>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.atpfivt</groupId>
+            <artifactId>junit-comparison</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <profiles>
+        <profile>
+            <id>failure-demo</id>
+            <properties>
+                <groups>failure-demo</groups>
+                <excludedGroups>none()</excludedGroups>
+            </properties>
+        </profile>
+    </profiles>
+</project>
